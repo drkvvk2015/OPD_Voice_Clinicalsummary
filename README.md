@@ -172,8 +172,10 @@ ui/
 
 ```
 git clone <repo-url>
-cd rxnova_clinical_ai
+cd OPD_Voice_Clinicalsummary
 ```
+
+> If you rename the local folder to `rxnova_clinical_ai`, update commands accordingly.
 
 ### 2. Install dependencies
 
