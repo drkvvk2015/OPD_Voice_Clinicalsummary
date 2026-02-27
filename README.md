@@ -283,3 +283,33 @@ This repository now includes a runnable Flutter MVP scaffold with:
 - Initial unit tests for diagnosis and prescription parsing services
 
 > Note: Replace placeholder AI services (`WhisperEngine`, `LlamaExtractor`, embedding stub) with actual on-device model runtimes for production.
+
+## 🛠️ Production Upgrade Progress (Steps 1–6)
+
+Implemented in codebase:
+
+1. **Pluggable offline engine adapters**
+   - `WhisperEngine` now uses a `WhisperAdapter` contract (`WhisperCppAdapter` stub included).
+   - `ClinicalExtractionService` now uses async `LlamaAdapter` + extraction validator.
+
+2. **SQLite-backed local persistence + schema + migration hooks**
+   - Added `sqflite_common_ffi` database with normalized tables (`patient`, `encounter`, `diagnosis`, `prescription`).
+   - Added schema versioning hooks and repository integration.
+   - Added field-level transcript/history encoding helper for local at-rest obfuscation.
+
+3. **Stronger clinical extraction and coding logic**
+   - Structured extraction model + validator.
+   - ICD resolver (`IcdMapper`) and confidence-based confirmation flags.
+
+4. **Robust prescription parsing + interactions**
+   - Regex-based dose/frequency/duration parsing.
+   - Drug normalization map (`pcm` → `Paracetamol`).
+   - Interaction warnings (`DrugInteractionChecker`) and warning surfacing.
+
+5. **Evaluation harness**
+   - Added `bin/evaluate.dart` for dataset-driven precision/recall/accuracy summary.
+
+6. **Product hardening**
+   - Controller-level error handling and busy/sync states.
+   - Offline sync queue service and manual flush action in UI.
+   - Clinical review flags and warning panels rendered in OPD screen.

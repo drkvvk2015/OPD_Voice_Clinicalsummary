@@ -14,6 +14,7 @@ class Encounter {
     required this.diagnoses,
     required this.investigations,
     required this.prescriptions,
+    this.requiresClinicalReview = false,
   });
 
   final String id;
@@ -26,4 +27,5 @@ class Encounter {
   final List<DiagnosisSuggestion> diagnoses;
   final List<String> investigations;
   final List<PrescriptionRow> prescriptions;
+  final bool requiresClinicalReview;
 }

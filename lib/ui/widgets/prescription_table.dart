@@ -19,6 +19,7 @@ class PrescriptionTable extends StatelessWidget {
         DataColumn(label: Text('Dose')),
         DataColumn(label: Text('Frequency')),
         DataColumn(label: Text('Duration')),
+        DataColumn(label: Text('Route')),
       ],
       rows: rows
           .map(
@@ -28,6 +29,7 @@ class PrescriptionTable extends StatelessWidget {
                 DataCell(Text(e.dose)),
                 DataCell(Text(e.frequency)),
                 DataCell(Text(e.duration)),
+                DataCell(Text(e.route)),
               ],
             ),
           )

@@ -1,9 +1,15 @@
-import '../../ai/llama/llama_extractor.dart';
+import '../../ai/contracts/llama_adapter.dart';
+import 'structured_extraction.dart';
+import 'structured_extraction_validator.dart';
 
 class ClinicalExtractionService {
-  ClinicalExtractionService(this._extractor);
+  ClinicalExtractionService(this._adapter, this._validator);
 
-  final LlamaExtractor _extractor;
+  final LlamaAdapter _adapter;
+  final StructuredExtractionValidator _validator;
 
-  Map<String, dynamic> extract(String transcript) => _extractor.extractStructuredData(transcript);
+  Future<StructuredExtraction> extract(String transcript) async {
+    final raw = await _adapter.extract(transcript);
+    return _validator.validate(raw);
+  }
 }

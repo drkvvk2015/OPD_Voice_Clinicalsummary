@@ -14,7 +14,7 @@ class RxNovaClinicalApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => ConsultationController.bootstrap(),
+      create: (_) => ConsultationController.bootstrap()..init(),
       child: MaterialApp(
         title: 'RxNova Clinical AI',
         theme: ThemeData(

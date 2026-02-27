@@ -16,7 +16,16 @@ class HomeScreen extends StatelessWidget {
         final encounter = controller.latestEncounter;
 
         return Scaffold(
-          appBar: AppBar(title: const Text('RxNova Clinical AI')),
+          appBar: AppBar(
+            title: const Text('RxNova Clinical AI'),
+            actions: [
+              IconButton(
+                onPressed: controller.isSyncing ? null : controller.flushSyncQueue,
+                icon: const Icon(Icons.sync),
+                tooltip: 'Sync pending encounters (${controller.pendingSyncCount})',
+              ),
+            ],
+          ),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: controller.isBusy ? null : controller.toggleRecording,
             icon: Icon(controller.isRecording ? Icons.stop : Icons.mic),
@@ -27,6 +36,11 @@ class HomeScreen extends StatelessWidget {
               : ListView(
                   padding: const EdgeInsets.all(12),
                   children: [
+                    if (controller.errorMessage != null)
+                      SectionCard(
+                        title: 'Error',
+                        child: Text(controller.errorMessage!, style: const TextStyle(color: Colors.red)),
+                      ),
                     SectionCard(
                       title: 'Transcript',
                       child: Text(controller.transcript.isEmpty
@@ -36,8 +50,18 @@ class HomeScreen extends StatelessWidget {
                     if (encounter != null) ...[
                       SectionCard(
                         title: 'Encounter Summary',
-                        child: Text('Patient: ${encounter.patient.name}\nCreated: ${formatDateTime(encounter.createdAt)}'),
+                        child: Text(
+                          'Patient: ${encounter.patient.name}\nCreated: ${formatDateTime(encounter.createdAt)}\nNeeds review: ${encounter.requiresClinicalReview ? 'Yes' : 'No'}',
+                        ),
                       ),
+                      if (controller.clinicalWarnings.isNotEmpty)
+                        SectionCard(
+                          title: 'Clinical Warnings',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: controller.clinicalWarnings.map((e) => Text('• $e')).toList(growable: false),
+                          ),
+                        ),
                       SectionCard(
                         title: 'Chief Complaints',
                         child: Column(
@@ -54,7 +78,11 @@ class HomeScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: encounter.diagnoses
-                              .map((d) => Text('• ${d.name} (${d.icdCode}) - ${(d.confidence * 100).toStringAsFixed(0)}%'))
+                              .map(
+                                (d) => Text(
+                                  '• ${d.name} (${d.icdCode}) - ${(d.confidence * 100).toStringAsFixed(0)}%${d.requiresConfirmation ? ' [Confirm]' : ''}',
+                                ),
+                              )
                               .toList(growable: false),
                         ),
                       ),
@@ -69,6 +97,14 @@ class HomeScreen extends StatelessWidget {
                         title: 'Prescription',
                         child: PrescriptionTable(rows: encounter.prescriptions),
                       ),
+                      if (controller.interactionWarnings.isNotEmpty)
+                        SectionCard(
+                          title: 'Drug Interaction Warnings',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: controller.interactionWarnings.map((e) => Text('• $e')).toList(growable: false),
+                          ),
+                        ),
                     ],
                     SectionCard(
                       title: 'Recent Encounters (${controller.history.length})',

@@ -8,5 +8,13 @@ void main() {
 
     expect(result.isNotEmpty, isTrue);
     expect(result.first.icdCode, 'J06.9');
+    expect(result.first.requiresConfirmation, isFalse);
+  });
+
+  test('marks low-confidence diagnosis for confirmation', () {
+    final service = DiagnosisService();
+    final result = service.suggest('Patient has fever only.');
+
+    expect(result.any((d) => d.requiresConfirmation), isTrue);
   });
 }
