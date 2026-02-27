@@ -172,8 +172,10 @@ ui/
 
 ```
 git clone <repo-url>
-cd rxnova_clinical_ai
+cd OPD_Voice_Clinicalsummary
 ```
+
+> If you rename the local folder to `rxnova_clinical_ai`, update commands accordingly.
 
 ### 2. Install dependencies
 
@@ -270,3 +272,94 @@ Internal development build — licensing to be defined.
 To build an AI-assisted outpatient operating system that enables clinicians to document faster, decide smarter, and deliver higher quality care without compromising workflow efficiency or patient privacy.
 
 ---
+
+## ✅ Current Implementation Snapshot
+
+This repository now includes a runnable Flutter MVP scaffold with:
+
+- Layered modules for `ai/`, `services/`, `data/`, `features/`, and `ui/`
+- Offline simulation pipeline: record → transcribe → extract → suggest diagnosis → parse prescription
+- In-memory encounter repository and OPD summary UI
+- Initial unit tests for diagnosis and prescription parsing services
+
+> Note: Replace placeholder AI services (`WhisperEngine`, `LlamaExtractor`, embedding stub) with actual on-device model runtimes for production.
+
+## 🛠️ Production Upgrade Progress (Steps 1–6)
+
+Implemented in codebase:
+
+1. **Pluggable offline engine adapters**
+   - `WhisperEngine` now uses a `WhisperAdapter` contract (`WhisperCppAdapter` stub included).
+   - `ClinicalExtractionService` now uses async `LlamaAdapter` + extraction validator.
+
+2. **SQLite-backed local persistence + schema + migration hooks**
+   - Added `sqflite_common_ffi` database with normalized tables (`patient`, `encounter`, `diagnosis`, `prescription`).
+   - Added schema versioning hooks and repository integration.
+   - Added field-level transcript/history encoding helper for local at-rest obfuscation.
+
+3. **Stronger clinical extraction and coding logic**
+   - Structured extraction model + validator.
+   - ICD resolver (`IcdMapper`) and confidence-based confirmation flags.
+
+4. **Robust prescription parsing + interactions**
+   - Regex-based dose/frequency/duration parsing.
+   - Drug normalization map (`pcm` → `Paracetamol`).
+   - Interaction warnings (`DrugInteractionChecker`) and warning surfacing.
+
+5. **Evaluation harness**
+   - Added `bin/evaluate.dart` for dataset-driven precision/recall/accuracy summary.
+
+6. **Product hardening**
+   - Controller-level error handling and busy/sync states.
+   - Offline sync queue service and manual flush action in UI.
+   - Clinical review flags and warning panels rendered in OPD screen.
+
+## 🚀 Futuristic Intelligence Modules (Implemented Scaffold)
+
+The app now includes first-pass implementation scaffolds for 10 forward-looking capabilities:
+
+1. Personalized clinical template suggestions (`PersonalizationService`)
+2. Longitudinal trend summarization (`LongitudinalService`)
+3. Advanced clinical safety checks (`ClinicalSafetyService`)
+4. Documentation QA audit agent (`DocumentationQaService`)
+5. Federated-learning local update simulation (`FederatedLearningService`)
+6. Multimodal ingestion summary layer (`MultimodalIngestionService`)
+7. Coding and billing suggestion engine (`CodingBillingService`)
+8. Population health signal detection (`PopulationHealthService`)
+9. Voice workflow automation suggestions (`VoiceAutomationService`)
+10. Digital twin treatment trajectory simulation (`DigitalTwinService`)
+
+These are wired into the consultation controller and surfaced in the UI under **Futuristic Intelligence Suite**.
+
+## 🔁 Git Update Workflow
+
+Use this checklist to keep your branch and PR status clean:
+
+1. Review current status
+
+```bash
+git status --short
+git log --oneline -5
+```
+
+2. Stage and commit
+
+```bash
+git add .
+git commit -m "feat: <short-summary>"
+```
+
+3. Run local checks before push (when SDK is installed)
+
+```bash
+flutter test
+dart run bin/evaluate.dart
+```
+
+4. Push branch and open/update PR
+
+```bash
+git push origin <branch-name>
+```
+
+> Tip: keep commit messages focused and small so clinical and QA changes are easy to audit.
