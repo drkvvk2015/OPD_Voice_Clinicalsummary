@@ -4,19 +4,22 @@ import '../../services/extraction_service/structured_extraction.dart';
 class LlamaExtractor implements LlamaAdapter {
   @override
   Future<StructuredExtraction> extract(String transcript) async {
-    final lower = transcript.toLowerCase();
+    final normalizedTranscript =
+        transcript.replaceAll(RegExp(r'\s+'), ' ').trim();
+    final lower = normalizedTranscript.toLowerCase();
+    final detectedLanguage = _detectLanguage(lower);
 
     final complaints = _extractComplaints(lower);
     final investigations = _extractInvestigations(lower);
-    final vitals = _extractVitals(transcript);
-    final labReports = _extractLabReports(transcript);
+    final vitals = _extractVitals(normalizedTranscript);
+    final labReports = _extractLabReports(normalizedTranscript);
     final referrals = _extractReferrals(lower);
     final medicalPlan = _extractMedicalPlan(lower);
     final surgicalPlan = _extractSurgicalPlan(lower);
     final advice = _extractAdvice(lower);
 
-    final patientName = _extractPatientName(transcript);
-    final patientAge = _extractPatientAge(transcript);
+    final patientName = _extractPatientName(normalizedTranscript);
+    final patientAge = _extractPatientAge(normalizedTranscript);
     final patientGender = _extractPatientGender(lower);
 
     final clinicalFindings = _extractClinicalFindings(lower);
@@ -35,7 +38,7 @@ class LlamaExtractor implements LlamaAdapter {
 
     return StructuredExtraction(
       chiefComplaints: complaints,
-      history: transcript,
+      history: normalizedTranscript,
       examination: examination,
       clinicalFindings: clinicalFindings,
       vitals: vitals,
@@ -49,23 +52,159 @@ class LlamaExtractor implements LlamaAdapter {
       patientName: patientName,
       patientAge: patientAge,
       patientGender: patientGender,
+      detectedLanguage: detectedLanguage,
     );
   }
 
   List<String> _extractComplaints(String lower) {
-    final complaints = <String>[
-      if (lower.contains('fever')) 'Fever',
-      if (lower.contains('cough')) 'Cough',
-      if (lower.contains('throat')) 'Sore throat',
-      if (lower.contains('pain')) 'Pain',
-      if (lower.contains('breathlessness') ||
-          lower.contains('shortness of breath'))
-        'Breathlessness',
-      if (lower.contains('headache')) 'Headache',
-      if (lower.contains('vomiting')) 'Vomiting',
-      if (lower.contains('diarrhea') || lower.contains('diarrhoea')) 'Diarrhea',
+    final rules = <({RegExp pattern, String complaint})>[
+      (
+        pattern: RegExp(
+          r'\b(?:fever|bukhar|bukhaar|jwaram|jvaram|kaichal|jvar|jwar)\b',
+        ),
+        complaint: 'Fever',
+      ),
+      (
+        pattern: RegExp(r'\b(?:cough|khansi|irumal|daggu)\b'),
+        complaint: 'Cough',
+      ),
+      (
+        pattern: RegExp(
+          r'\b(?:sore throat|throat pain|gala dard|gale me dard|gonthu noppi|thonda vali)\b',
+        ),
+        complaint: 'Sore throat',
+      ),
+      (
+        pattern: RegExp(
+          r'\b(?:breathlessness|shortness of breath|dyspnea|saans phool|saans lene .*dikkat|moochu .*kastam|oopiri ibbandi)\b',
+        ),
+        complaint: 'Breathlessness',
+      ),
+      (
+        pattern: RegExp(
+          r'\b(?:headache|sar dard|sir dard|talai vali|talanoppi)\b',
+        ),
+        complaint: 'Headache',
+      ),
+      (
+        pattern: RegExp(r'\b(?:vomiting|vomit|ulti|vanti)\b'),
+        complaint: 'Vomiting',
+      ),
+      (
+        pattern: RegExp(
+          r'\b(?:diarrhea|diarrhoea|dast|loose motions?|virechanalu)\b',
+        ),
+        complaint: 'Diarrhea',
+      ),
+      (
+        pattern: RegExp(
+          r'\b(?:abdominal pain|stomach pain|pet dard|vayitru vali|kadupu noppi)\b',
+        ),
+        complaint: 'Abdominal pain',
+      ),
+      (
+        pattern: RegExp(r'\b(?:chest pain|seene me dard|nenju vali)\b'),
+        complaint: 'Chest pain',
+      ),
+      (
+        pattern: RegExp(r'\b(?:dizziness|vertigo|chakkar)\b'),
+        complaint: 'Dizziness',
+      ),
     ];
+
+    final complaints = <String>[];
+    for (final rule in rules) {
+      if (rule.pattern.hasMatch(lower)) {
+        complaints.add(rule.complaint);
+      }
+    }
+    if (complaints.isEmpty &&
+        RegExp(r'\b(?:pain|dard|vali|noppi)\b').hasMatch(lower)) {
+      complaints.add('Pain');
+    }
     return _dedupe(complaints);
+  }
+
+  String _detectLanguage(String lower) {
+    final hindiScore = _countMatches(lower, const [
+      'bukhar',
+      'bukhaar',
+      'khansi',
+      'gala dard',
+      'gale me',
+      'sar dard',
+      'sir dard',
+      'ulti',
+      'dast',
+      'saans',
+      'pet dard',
+      'chakkar',
+    ]);
+    final tamilScore = _countMatches(lower, const [
+      'kaichal',
+      'irumal',
+      'talai vali',
+      'vayitru vali',
+      'thonda vali',
+      'nenju vali',
+      'moochu',
+      'kastam',
+    ]);
+    final teluguScore = _countMatches(lower, const [
+      'jvaram',
+      'jwaram',
+      'daggu',
+      'talanoppi',
+      'kadupu noppi',
+      'gonthu noppi',
+      'vanti',
+      'virechanalu',
+      'oopiri',
+      'ibbandi',
+    ]);
+
+    final scores = <({String language, int score})>[
+      (language: 'Hindi', score: hindiScore),
+      (language: 'Tamil', score: tamilScore),
+      (language: 'Telugu', score: teluguScore),
+    ]..sort((a, b) => b.score.compareTo(a.score));
+
+    final activeLocal = scores
+        .where((entry) => entry.score > 0)
+        .map((entry) => entry.language)
+        .toList(growable: false);
+    final hasEnglishSignal = _containsAny(
+      lower,
+      const [
+        'fever',
+        'cough',
+        'headache',
+        'pain',
+        'shortness of breath',
+        'bp',
+        'pulse',
+        'temperature',
+        'spo2',
+        'history',
+        'prescribe',
+        'tablet',
+        'capsule',
+      ],
+    );
+
+    if (activeLocal.isEmpty) {
+      return hasEnglishSignal ? 'English' : 'Unknown';
+    }
+    if (activeLocal.length == 1) {
+      return hasEnglishSignal
+          ? 'Multilingual (English + ${activeLocal.first})'
+          : activeLocal.first;
+    }
+
+    final joined = activeLocal.join(' + ');
+    return hasEnglishSignal
+        ? 'Multilingual (English + $joined)'
+        : 'Multilingual ($joined)';
   }
 
   List<String> _extractInvestigations(String lower) {
@@ -295,5 +434,24 @@ class LlamaExtractor implements LlamaAdapter {
         .where((v) => v.isNotEmpty)
         .toSet()
         .toList(growable: false);
+  }
+
+  int _countMatches(String lower, List<String> signals) {
+    var score = 0;
+    for (final signal in signals) {
+      if (lower.contains(signal)) {
+        score++;
+      }
+    }
+    return score;
+  }
+
+  bool _containsAny(String lower, List<String> signals) {
+    for (final signal in signals) {
+      if (lower.contains(signal)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

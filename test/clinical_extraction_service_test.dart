@@ -28,4 +28,24 @@ void main() {
     expect(result.referralConsultations, isNotEmpty);
     expect(result.medicalPlan, isNotEmpty);
   });
+
+  test('detects local language complaint terms and normalizes complaints',
+      () async {
+    final service = ClinicalExtractionService(
+        LlamaExtractor(), StructuredExtractionValidator());
+
+    final result = await service.extract(
+      'Patient says bukhar and khansi since 2 din, also sar dard. '
+      'BP 130/90 pulse 98. prescribe tablet PCM and follow up.',
+    );
+
+    expect(result.detectedLanguage, contains('Hindi'));
+    expect(
+        result.chiefComplaints,
+        containsAll(<String>[
+          'Fever',
+          'Cough',
+          'Headache',
+        ]));
+  });
 }

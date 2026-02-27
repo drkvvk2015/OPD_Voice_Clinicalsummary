@@ -135,7 +135,8 @@ class AudioService {
             return;
           }
           _partialTranscript = recognized;
-          _liveTranscript = _mergeTranscript(_accumulatedTranscript, recognized);
+          _liveTranscript =
+              _mergeTranscript(_accumulatedTranscript, recognized);
         },
         onSoundLevelChange: (level) {
           _voiceLevel = _normalizeSoundLevel(level);

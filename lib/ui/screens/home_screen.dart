@@ -213,8 +213,11 @@ class HomeScreen extends StatelessWidget {
                         children: [
                           Text(controller.liveTranscript.isEmpty
                               ? 'Start recording and speak patient details (name, age, gender) and symptoms.'
-                              : 'Live transcript: ${controller.liveTranscript}'),
+                              : 'Live transcript (full conversation): ${controller.liveTranscript}'),
                           const SizedBox(height: 8),
+                          Text(
+                              'Detected language: ${controller.liveDetectedLanguage}'),
+                          const SizedBox(height: 4),
                           Text(
                               'Detected complaints: ${controller.liveComplaints.isEmpty ? 'None yet' : controller.liveComplaints.join(', ')}'),
                           const SizedBox(height: 4),

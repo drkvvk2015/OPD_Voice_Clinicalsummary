@@ -151,6 +151,7 @@ class ConsultationController extends ChangeNotifier {
   List<String> _liveAdvice = const [];
   List<String> _liveDiagnoses = const [];
   String _liveMedicationPreview = '';
+  String _liveDetectedLanguage = 'Unknown';
   String _liveAiReport = 'Waiting for live voice input...';
   bool _liveAnalysisBusy = false;
   String _lastAnalyzedLiveTranscript = '';
@@ -216,6 +217,7 @@ class ConsultationController extends ChangeNotifier {
   List<String> get liveAdvice => _liveAdvice;
   List<String> get liveDiagnoses => _liveDiagnoses;
   String get liveMedicationPreview => _liveMedicationPreview;
+  String get liveDetectedLanguage => _liveDetectedLanguage;
   String get liveAiReport => _liveAiReport;
   String get liveCorrectionInput => _liveCorrectionInput;
   bool get isEhrSyncing => _isEhrSyncing;
@@ -466,6 +468,7 @@ class ConsultationController extends ChangeNotifier {
     _liveAdvice = const [];
     _liveDiagnoses = const [];
     _liveMedicationPreview = '';
+    _liveDetectedLanguage = 'Unknown';
     _liveAiReport = 'Listening...';
     _lastAnalyzedLiveTranscript = '';
     _liveCorrectionInput = '';
@@ -1072,6 +1075,7 @@ class ConsultationController extends ChangeNotifier {
       _liveSurgicalPlan = structured.surgicalPlan;
       _liveAdvice = structured.advice;
       _liveDiagnoses = diagnoses.map((d) => d.name).toList(growable: false);
+      _liveDetectedLanguage = structured.detectedLanguage ?? 'Unknown';
       _liveMedicationPreview = parse.rows.isEmpty
           ? 'No medications detected yet.'
           : parse.rows
@@ -1087,6 +1091,9 @@ class ConsultationController extends ChangeNotifier {
   }
 
   String _buildLiveAiReport() {
+    final language = _liveDetectedLanguage.trim().isEmpty
+        ? 'Unknown'
+        : _liveDetectedLanguage.trim();
     final complaints = _liveComplaints.isEmpty
         ? 'not yet detected'
         : _liveComplaints.join(', ');
@@ -1109,7 +1116,7 @@ class ConsultationController extends ChangeNotifier {
         'surgical: ${_liveSurgicalPlan.join(', ')}',
       if (_liveAdvice.isNotEmpty) 'advice: ${_liveAdvice.join(', ')}',
     ].join(' | ');
-    return 'Live case prep: complaints [$complaints], diagnosis candidates [$dx], '
+    return 'Live case prep: language [$language], complaints [$complaints], diagnosis candidates [$dx], '
         'vitals [$vitals], labs [$labs], investigations [$ix], referrals [$referrals], '
         'treatment [${treatment.isEmpty ? 'pending' : treatment}], meds [$_liveMedicationPreview].';
   }
@@ -1205,7 +1212,11 @@ class ConsultationController extends ChangeNotifier {
           _liveCorrectionInput = latestTranscript;
         }
         _autoPopulatePatientFromVoice(latestTranscript, notify: false);
-        unawaited(_runLiveAnalysis(latestTranscript));
+      }
+      if (_liveTranscript.isNotEmpty) {
+        // Keep analysis running in the background against the full transcript
+        // even when new text arrives while a previous pass is still running.
+        unawaited(_runLiveAnalysis(_liveTranscript));
       }
       notifyListeners();
     });
