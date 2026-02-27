@@ -272,3 +272,14 @@ Internal development build — licensing to be defined.
 To build an AI-assisted outpatient operating system that enables clinicians to document faster, decide smarter, and deliver higher quality care without compromising workflow efficiency or patient privacy.
 
 ---
+
+## ✅ Current Implementation Snapshot
+
+This repository now includes a runnable Flutter MVP scaffold with:
+
+- Layered modules for `ai/`, `services/`, `data/`, `features/`, and `ui/`
+- Offline simulation pipeline: record → transcribe → extract → suggest diagnosis → parse prescription
+- In-memory encounter repository and OPD summary UI
+- Initial unit tests for diagnosis and prescription parsing services
+
+> Note: Replace placeholder AI services (`WhisperEngine`, `LlamaExtractor`, embedding stub) with actual on-device model runtimes for production.
