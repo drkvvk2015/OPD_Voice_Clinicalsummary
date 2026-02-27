@@ -52,6 +52,9 @@ class OpdSheetExportService {
           _section('Chief Complaints', encounter.chiefComplaints),
           _section('History', [encounter.history]),
           _section('Examination', [encounter.examination]),
+          _section('Clinical Findings', [encounter.clinicalFindings]),
+          _section('Vitals', encounter.vitals),
+          _section('Lab Reports', encounter.labReports),
           _section(
             'Diagnoses',
             encounter.diagnoses
@@ -63,6 +66,10 @@ class OpdSheetExportService {
                 .toList(growable: false),
           ),
           _section('Investigations', encounter.investigations),
+          _section('Referral Consultations', encounter.referralConsultations),
+          _section('Medical Plan', encounter.medicalPlan),
+          _section('Surgical Plan', encounter.surgicalPlan),
+          _section('Advice', encounter.advice),
           _section(
             'Prescriptions',
             encounter.prescriptions

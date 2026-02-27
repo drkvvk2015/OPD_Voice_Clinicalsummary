@@ -65,8 +65,15 @@ class LocalDatabase {
         transcript_cipher TEXT NOT NULL,
         history_cipher TEXT NOT NULL,
         examination TEXT NOT NULL,
+        clinical_findings TEXT NOT NULL DEFAULT '',
         complaints_json TEXT NOT NULL,
+        vitals_json TEXT NOT NULL DEFAULT '[]',
+        lab_reports_json TEXT NOT NULL DEFAULT '[]',
         investigations_json TEXT NOT NULL,
+        referrals_json TEXT NOT NULL DEFAULT '[]',
+        medical_plan_json TEXT NOT NULL DEFAULT '[]',
+        surgical_plan_json TEXT NOT NULL DEFAULT '[]',
+        advice_json TEXT NOT NULL DEFAULT '[]',
         requires_clinical_review INTEGER NOT NULL DEFAULT 0,
         FOREIGN KEY(patient_id) REFERENCES patient(id)
       );
@@ -112,6 +119,22 @@ class LocalDatabase {
       await db.execute(
           'ALTER TABLE patient ADD COLUMN hepatic_risk INTEGER NOT NULL DEFAULT 0;');
     }
+    if (oldVersion < 3) {
+      await db.execute(
+          "ALTER TABLE encounter ADD COLUMN clinical_findings TEXT NOT NULL DEFAULT '';");
+      await db.execute(
+          "ALTER TABLE encounter ADD COLUMN vitals_json TEXT NOT NULL DEFAULT '[]';");
+      await db.execute(
+          "ALTER TABLE encounter ADD COLUMN lab_reports_json TEXT NOT NULL DEFAULT '[]';");
+      await db.execute(
+          "ALTER TABLE encounter ADD COLUMN referrals_json TEXT NOT NULL DEFAULT '[]';");
+      await db.execute(
+          "ALTER TABLE encounter ADD COLUMN medical_plan_json TEXT NOT NULL DEFAULT '[]';");
+      await db.execute(
+          "ALTER TABLE encounter ADD COLUMN surgical_plan_json TEXT NOT NULL DEFAULT '[]';");
+      await db.execute(
+          "ALTER TABLE encounter ADD COLUMN advice_json TEXT NOT NULL DEFAULT '[]';");
+    }
     if (newVersion > oldVersion) {
       // Reserved for future migrations.
     }
@@ -131,8 +154,15 @@ class LocalDatabase {
         'transcript_cipher': _codec.encrypt(encounter.transcript),
         'history_cipher': _codec.encrypt(encounter.history),
         'examination': encounter.examination,
+        'clinical_findings': encounter.clinicalFindings,
         'complaints_json': jsonEncode(encounter.chiefComplaints),
+        'vitals_json': jsonEncode(encounter.vitals),
+        'lab_reports_json': jsonEncode(encounter.labReports),
         'investigations_json': jsonEncode(encounter.investigations),
+        'referrals_json': jsonEncode(encounter.referralConsultations),
+        'medical_plan_json': jsonEncode(encounter.medicalPlan),
+        'surgical_plan_json': jsonEncode(encounter.surgicalPlan),
+        'advice_json': jsonEncode(encounter.advice),
         'requires_clinical_review': encounter.requiresClinicalReview ? 1 : 0,
       });
 
@@ -183,6 +213,9 @@ class LocalDatabase {
               jsonDecode(row['complaints_json'] as String) as List<dynamic>),
           history: _codec.decrypt(row['history_cipher'] as String),
           examination: row['examination'] as String,
+          clinicalFindings: (row['clinical_findings'] as String?) ?? '',
+          vitals: _decodeJsonList(row['vitals_json']),
+          labReports: _decodeJsonList(row['lab_reports_json']),
           diagnoses: diagnosisRows
               .map(
                 (item) => DiagnosisSuggestion(
@@ -197,6 +230,10 @@ class LocalDatabase {
           investigations: List<String>.from(
               jsonDecode(row['investigations_json'] as String)
                   as List<dynamic>),
+          referralConsultations: _decodeJsonList(row['referrals_json']),
+          medicalPlan: _decodeJsonList(row['medical_plan_json']),
+          surgicalPlan: _decodeJsonList(row['surgical_plan_json']),
+          advice: _decodeJsonList(row['advice_json']),
           prescriptions: prescriptionRows
               .map(PrescriptionRow.fromMap)
               .toList(growable: false),
@@ -227,6 +264,21 @@ class LocalDatabase {
     final file = File(dbPath);
     if (await file.exists()) {
       await file.delete();
+    }
+  }
+
+  List<String> _decodeJsonList(dynamic raw) {
+    if (raw is! String || raw.trim().isEmpty) {
+      return const [];
+    }
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) {
+        return decoded.map((e) => e.toString()).toList(growable: false);
+      }
+      return const [];
+    } catch (_) {
+      return const [];
     }
   }
 }

@@ -200,6 +200,15 @@ assets/models/
 flutter run
 ```
 
+### 5. Live Voice Analysis Usage
+
+- Grant microphone permission when prompted.
+- Start consultation and speak details like:
+  - `"My name is Ramesh Kumar"`
+  - `"I am 42 years old male"`
+  - symptoms, findings, and treatment plan.
+- The app updates live transcript, case-prep analysis, and auto-fills patient demographics during recording.
+
 ---
 
 ## 🧪 Development Roadmap
@@ -283,6 +292,11 @@ This repository now includes a runnable Flutter MVP scaffold with:
 - PDF OPD sheet export for the latest encounter (`AppBar` PDF button, stored under app documents `exports/`)
 - Patient profile capture in UI (allergies, pregnancy, renal/hepatic risk) wired into safety checks and persistence
 - Dedicated Copilot Explainability panel (template rationale + evidence + macro suggestions)
+- Draft-first OPD review flow: AI output is editable before confirmation to save or export
+- Live speech-driven analysis loop: real-time transcript + case-prep preview + auto-detected demographics (name/age/gender)
+- Comprehensive audio-to-case-sheet extraction: complaints, findings, vitals, labs, investigations, referrals, medical/surgical plan, advice, and prescriptions
+- Completeness gate with mandatory section scoring (save/export/EHR sync blocked below threshold)
+- EHR integration options: FHIR R4, HL7v2 bridge, or custom API payload export/sync
 - Initial unit tests for diagnosis and prescription parsing services
 
 > Note: Replace placeholder AI services (`WhisperEngine`, `LlamaExtractor`, embedding stub) with actual on-device model runtimes for production.

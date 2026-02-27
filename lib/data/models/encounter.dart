@@ -14,6 +14,13 @@ class Encounter {
     required this.diagnoses,
     required this.investigations,
     required this.prescriptions,
+    this.clinicalFindings = '',
+    this.vitals = const [],
+    this.labReports = const [],
+    this.referralConsultations = const [],
+    this.medicalPlan = const [],
+    this.surgicalPlan = const [],
+    this.advice = const [],
     this.requiresClinicalReview = false,
   });
 
@@ -27,5 +34,12 @@ class Encounter {
   final List<DiagnosisSuggestion> diagnoses;
   final List<String> investigations;
   final List<PrescriptionRow> prescriptions;
+  final String clinicalFindings;
+  final List<String> vitals;
+  final List<String> labReports;
+  final List<String> referralConsultations;
+  final List<String> medicalPlan;
+  final List<String> surgicalPlan;
+  final List<String> advice;
   final bool requiresClinicalReview;
 }
